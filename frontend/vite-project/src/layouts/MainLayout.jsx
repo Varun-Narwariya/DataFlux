@@ -1,16 +1,15 @@
-import { Outlet } from "react-router-dom";
-import { Navbar, Footer } from "../shared/components";
+import Navbar from "../shared/components/Navbar";
+import Footer from "../shared/components/Footer";
+import { useAuth } from "../features/auth/useAuth";
 
-function MainLayout() {
+export default function MainLayout({ children }) {
+  const { user, logout } = useAuth();
+
   return (
-    <>
-      <Navbar />
-      <main style={{ padding: "40px" }}>
-        <Outlet />
-      </main>
+    <div className="min-h-screen flex flex-col bg-gray-50">
+      <Navbar user={user} onLogout={logout} />
+      <main className="flex-1">{children}</main>
       <Footer />
-    </>
+    </div>
   );
 }
-
-export default MainLayout;

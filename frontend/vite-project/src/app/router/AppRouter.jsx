@@ -1,41 +1,38 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useAuth } from "../../features/auth/useAuth";
 
-import { ToolsPage, ToolPage, DashboardPage } from "@/pages";
-import { LoginPage, SignupPage } from "@/features/auth";
+// Pages
+import ToolsPage    from "../../pages/ToolsPage";
+import ToolPage     from "../../pages/ToolPage";
+import DashboardPage from "../../pages/DashboardPage";
+import LoginPage    from "../../features/auth/LoginPage";
+import SignupPage   from "../../features/auth/SignupPage";
 
-import MainLayout from "@/layouts/MainLayout";
-import ToolLayout from "@/layouts/ToolLayout";
-import AuthLayout from "@/layouts/AuthLayout";
+function ProtectedRoute({ children }) {
+  const { isAuthenticated } = useAuth();
+  return isAuthenticated ? children : <Navigate to="/login" replace />;
+}
 
-function AppRouter() {
+function GuestRoute({ children }) {
+  const { isAuthenticated } = useAuth();
+  return !isAuthenticated ? children : <Navigate to="/dashboard" replace />;
+}
+
+export default function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/"              element={<ToolsPage />} />
+        <Route path="/tools"         element={<ToolsPage />} />
+        <Route path="/tools/:toolId" element={<ToolPage />} />
 
-        {/* Main public pages */}
-        <Route element={<MainLayout />}>
-          <Route path="/" element={<ToolsPage />} />
-        </Route>
+        <Route path="/login"  element={<GuestRoute><LoginPage /></GuestRoute>} />
+        <Route path="/signup" element={<GuestRoute><SignupPage /></GuestRoute>} />
 
-        {/* Tool pages */}
-        <Route element={<ToolLayout />}>
-          <Route path="/tool/:toolSlug" element={<ToolPage />} />
-        </Route>
+        <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
 
-        {/* Auth pages */}
-        <Route element={<AuthLayout />}>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-        </Route>
-
-        {/* Dashboard */}
-        <Route element={<MainLayout />}>
-          <Route path="/dashboard" element={<DashboardPage />} />
-        </Route>
-
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
 }
-
-export default AppRouter;

@@ -1,16 +1,16 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import ToolsPage from "../pages/ToolsPage";
-import ToolPage from "../pages/ToolPage";
+import AuthProvider from "./providers/AuthProvider";
+import ThemeProvider from "./providers/ThemeProvider";
+import QueryProvider from "./providers/QueryProvider";
+import AppRouter from "./router/AppRouter";
 
-function App() {
+export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<ToolsPage />} />
-        <Route path="/tool/:toolSlug" element={<ToolPage />} />
-      </Routes>
-    </BrowserRouter>
+    <ThemeProvider>
+      <QueryProvider>
+        <AuthProvider>
+          <AppRouter />
+        </AuthProvider>
+      </QueryProvider>
+    </ThemeProvider>
   );
 }
-
-export default App;
