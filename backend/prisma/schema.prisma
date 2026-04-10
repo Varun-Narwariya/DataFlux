@@ -1,0 +1,83 @@
+// prisma/schema.prisma
+// Run: npx prisma migrate dev --name init
+// Run: npx prisma generate
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── User ─────────────────────────────────────────────────────────────────────
+
+model User {
+  id         String   @id @default(uuid())
+  email      String   @unique
+  password   String
+  plan       Plan     @default(FREE)
+  quotaUsed  Int      @default(0) @map("quota_used")
+  quotaLimit Int      @default(10) @map("quota_limit")
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  jobs          Job[]
+  subscription  Subscription?
+
+  @@map("users")
+}
+
+enum Plan {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+// ─── Job ──────────────────────────────────────────────────────────────────────
+
+model Job {
+  id         String    @id @default(uuid())
+  userId     String    @map("user_id")
+  type       String    // 'merge' | 'compress' | 'ai-summarise' etc.
+  status     JobStatus @default(QUEUED)
+  inputKeys  String[]  @map("input_keys")   // S3 keys of input files
+  outputKey  String?   @map("output_key")   // S3 key of result file
+  error      String?
+  meta       Json      @default("{}")        // tool-specific options
+  expiresAt  DateTime  @map("expires_at")   // files deleted after this
+  createdAt  DateTime  @default(now()) @map("created_at")
+  updatedAt  DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("jobs")
+}
+
+enum JobStatus {
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+// ─── Subscription (Stripe) ────────────────────────────────────────────────────
+
+model Subscription {
+  id                   String   @id @default(uuid())
+  userId               String   @unique @map("user_id")
+  stripeCustomerId     String?  @unique @map("stripe_customer_id")
+  stripeSubscriptionId String?  @unique @map("stripe_subscription_id")
+  status               String?  // 'active' | 'canceled' | 'past_due'
+  plan                 String?
+  currentPeriodEnd     DateTime? @map("current_period_end")
+  createdAt            DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
